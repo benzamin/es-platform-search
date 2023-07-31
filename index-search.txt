@@ -1,0 +1,187 @@
+GET index_my_poc1/_search
+{
+  
+  "query": {
+    "bool" : {
+      "should" : [
+        //{"rank_feature":{"field":"ranks.feature","boost":1}},
+        {
+            "multi_match": {
+            "query": "shirt",
+            //"fields": ["query_text"],
+            "fuzziness": "AUTO"
+            }
+        }
+      ],
+      "filter": [{"term" : { "category" : "Clothing-Men" }}],
+      "minimum_should_match" : 1
+    }
+  },
+  "_source":["identifier", "title","short_desc", "description","price","category", "sub-category", "url", "deeplink"],
+  "from":0,
+  "size":20
+      
+}
+
+POST index_my_poc1/_analyze
+{
+  "analyzer": "nGram_analyzer", 
+  "text": "55$ Quick Foxes jumpOVER ANOTHERdog *abc def|xyz 65kilo unlucky13 ass butt strengthening"
+}
+
+DELETE index_my_poc1
+
+put index_my_poc1
+{
+  "settings": {
+    "analysis": {
+      "analyzer": {
+        "nGram_analyzer": {
+          "type": "custom",
+          "tokenizer": "whitespace",
+          "char_filter":["html_strip","custom_char_filter","space_maker_2", "space_maker_3" ],
+          "filter": [
+            "lowercase",
+            "asciifolding",
+            "nGram_filter"
+          ]
+        },
+        "whitespace_analyzer": {
+          "type": "custom",
+          "tokenizer": "whitespace",
+          "char_filter": ["space_maker_2", "space_maker_3"
+          ],
+          "filter": [
+            "lowercase",
+            "asciifolding",
+            "synonym_apply",
+            "special_stopwards"
+          ]
+        }
+      },
+      "char_filter": {
+        "custom_char_filter": {
+          "type": "mapping",
+          "mappings": [
+            "$ => dollar"
+          ]
+        },
+        "space_maker_1": {
+          "type": "pattern_replace", 
+          "pattern": "(?<=[a-z])(?=[A-Z])|(?<=[A-Z])(?=[a-z])",
+          "replacement": " "
+        },
+        "space_maker_2": {
+          "type": "pattern_replace",
+          "pattern": "(?<=\\p{Digit})(?=\\p{Alpha})|(?<=\\p{Alpha})(?=\\p{Digit})",
+          "replacement": " "
+        },
+        "space_maker_3": {
+          "type": "pattern_replace",
+          "pattern": "(?<=[a-zA-Z0-9])(?=[^a-zA-Z0-9])|(?<=[^a-zA-Z0-9])(?=[a-zA-Z0-9])",
+          "replacement": " "
+        }
+      },
+       "filter": {
+        "nGram_filter": {
+          "type": "edge_ngram",
+          "min_gram": 2,
+          "max_gram": 20,
+          "token_chars": [
+            "letter",
+            "digit",
+            "punctuation",
+            "symbol"
+          ]
+        },
+        "synonym_apply": {
+            "type": "synonym",
+            "lenient": true,
+            "synonyms": [ "kilo, kilogram => kg",
+            "buck, dollar => usd"
+            ]
+          },
+        "special_stopwards": {
+            "type": "stop",
+            "stopwords": [ "ass", "butt" ]
+          }
+      }
+    }
+  },
+  "mappings": {
+    "properties": {
+      "identifier": {
+        "type": "text",
+        "index": false
+      },
+      "title": {
+        "type": "text",
+        "analyzer": "nGram_analyzer",
+        "search_analyzer": "whitespace_analyzer",
+        "copy_to": "query_text"
+      },
+      "short_desc": {
+        "type": "text",
+        "analyzer": "nGram_analyzer",
+        "search_analyzer": "whitespace_analyzer",
+        "copy_to": "query_text"
+      },
+      "description": {
+        "type": "text",
+        "analyzer": "nGram_analyzer",
+        "search_analyzer": "whitespace_analyzer",
+        "copy_to": "query_text"
+      },
+      "category": {
+        "type": "keyword"
+      },
+      "sub-category": {
+        "type": "keyword"
+      },
+      "price": {
+        "type": "text",
+        "copy_to": "query_text"
+      },
+       "tags": {
+        "type": "text",
+        "analyzer": "nGram_analyzer",
+        "search_analyzer": "whitespace_analyzer",
+        "copy_to": "query_text"
+      },
+      "type": {
+        "type": "keyword",
+        "index": false
+      },
+      "icon": {
+        "type": "text",
+        "index": false
+      },
+      "url": {
+        "type": "text",
+        "index": false
+      },
+      "deeplink": {
+        "type": "text",
+        "index": false
+      },
+      "labels": {
+        "type": "flattened"
+      },
+      "from_version": {
+        "type": "version"
+      },
+      "ranks": {
+        "type": "rank_features" 
+      },
+      "validity-range": {
+        "type": "date_range", 
+        "format": "yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||epoch_second"
+      },
+      
+      "ttl": {
+        "type":   "date",
+        "format": "dd-MM-yyyy HH:mm:ss||dd-MM-yyyy||epoch_second"
+      }
+    }
+  }
+}

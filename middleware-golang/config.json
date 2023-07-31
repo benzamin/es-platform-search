@@ -1,0 +1,14 @@
+{
+    "max_workers": 20,
+    "queue_size": 1000,
+    "port": "8080",
+    "es_url": "https://127.0.0.1:9200",
+    "es_username": "elastic",
+    "es_password": "F5ar6QpY8mjW+yrwuk22",
+    "es_index":"index_my_poc1",
+    "per_page": 10,
+    "es_api_timeout": 300,
+    "log_write_location":"./logs/",
+    "read_timeout":2000,
+    "write_timeout":5000
+  }
